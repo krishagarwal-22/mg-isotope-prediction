@@ -21,13 +21,13 @@ optuna.logging.set_verbosity(optuna.logging.WARNING)
 
 TARGET, IDCOL, CATCOL = "d26Mg", "Sample_ID", "Rock_Type"
 
-# ---------------------------------------------------------------- 1. LOAD -----
+# ---------------------------------------------------------------- 1. Loading the files  -----
 up = files.upload()
 fn = list(up.keys())[0]
 df = pd.read_excel(fn)
 n0 = len(df)
 
-# --------------------------------------------------------- 2. CLEAN -----------
+# --------------------------------------------------------- 2. CLEAN the dataset -----------
 # 'X' (and friends) are missing-value tokens in this dataset -> NaN, then numeric
 df = df.replace(["X","x","?","NA","N/A","na","n.d.","nd","-","","bdl","BDL","-999",-999], np.nan)
 for c in df.columns:
@@ -100,7 +100,7 @@ groups = df[CATCOL].astype(str).values
 kf, gkf = KFold(5,shuffle=True,random_state=42), GroupKFold(5)
 def sc(a,b): return dict(R2=r2_score(a,b),RMSE=np.sqrt(mean_squared_error(a,b)),MAE=mean_absolute_error(a,b))
 
-# ------------------------------------------------- 6. MODEL COMPARISON --------
+# ------------------------------------------------- 6.COMPARISON of diffrent models --------
 models = [
  ("Ridge",        Pipeline([("s",StandardScaler()),("m",Ridge(alpha=10))]), X_imp),
  ("RandomForest", RandomForestRegressor(300,random_state=42,n_jobs=-1), X_imp),
@@ -126,7 +126,7 @@ print("\n=== MODEL COMPARISON (rand = optimistic ; group = honest) ===")
 print(board.to_string(index=False))
 best=board.iloc[0]["model"]
 
-# ------------------------------------------------- 7. OPTUNA (grouped CV) -----
+# ------------------------------------------------- 7. OPTUNA  -----
 print(f"\nOptuna tuning {best} ...")
 g3=GroupKFold(3)
 def cvr(m,Xin,cv): return np.sqrt(mean_squared_error(y,cross_val_predict(m,Xin,y,cv=cv,groups=groups)))
@@ -184,7 +184,7 @@ worst=df.reindex(df["err"].abs().sort_values(ascending=False).index).head(25)
 print("\nWorst-error rock types (process-dominated anomalies):")
 print(worst["Rock_Type"].value_counts().head(10).to_string())
 
-# ------------------------------------------------- 9. SHAP + PLOTS ------------
+# ------------------------------------------------- 9. SHAP (Knowing the cause) + PLOTS ------------
 bm.fit(Xin,y)
 expl=shap.TreeExplainer(bm); sv=expl.shap_values(Xin)
 shap.summary_plot(sv,Xin,plot_type="bar",max_display=15,show=False)
@@ -198,7 +198,7 @@ plt.xlabel("Measured δ²⁶Mg (‰)"); plt.ylabel("Predicted δ²⁶Mg (‰)")
 plt.legend(fontsize=7); plt.title(f"{best} tuned — honest R²={fs['R2']:.2f}")
 plt.tight_layout(); plt.savefig("pred_vs_meas.png",dpi=150); plt.show()
 
-# ------------------------------------------------- 10. SAVE -------------------
+# ------------------------------------------------- 10. Saving all the results -------------------
 board.to_csv("model_comparison.csv",index=False)
 df[[IDCOL,CATCOL,"Regime",TARGET,"pred","err"]].to_csv("predictions.csv",index=False)
 json.dump({"n_samples":int(len(y)),"n_features":int(len(feat_cols)),
