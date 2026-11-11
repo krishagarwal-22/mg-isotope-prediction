@@ -1,9 +1,3 @@
-# ============================================================================
-#  δ²⁶Mg PREDICTION FROM MAJOR + TRACE GEOCHEMISTRY  —  full Colab pipeline
-#  Clean → theory-motivated features → 6 models × 2 CV schemes
-#        → Optuna tuning → per-regime breakdown → SHAP → save outputs
-#  Upload TRANING_DATA.xlsx when prompted. Everything else is automatic.
-# ============================================================================
 
 !pip -q install xgboost lightgbm catboost optuna shap scikit-learn openpyxl 2>/dev/null
 
